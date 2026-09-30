@@ -1,0 +1,14 @@
+# Client repo — AI context exclude (secrets / PII dumps)
+# Copied by kit bootstrap → project root `.cursorignore` (if absent)
+
+.env
+.env.*
+!.env.example
+**/credentials/**
+**/secrets/**
+**/*.key
+**/*.pem
+**/backups/**
+**/dumps/**
+**/*dump*.sql
+**/*dump*.sql.gz

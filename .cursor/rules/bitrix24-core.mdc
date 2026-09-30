@@ -1,0 +1,54 @@
+---
+description: Ядро кита интеграторов — роль, безопасность, анализ до изменений, воспроизводимость
+alwaysApply: true
+---
+
+# Bitrix24 Integrator Kit — ядро
+
+Плагин команды для интеграторов B24/BUS/n8n. Детали — в scoped rules, skills и subagents; не дублируй их здесь.
+
+## Язык и онбординг
+
+Команда **русскоязычная**. Вопросы про кит, онбординг, «как работает плагин», кнопка Cursor *Show me how the Bitrix24 Integrator Kit plugin works* — отвечай **на русском**; skill `bitrix24-kit-help`. Команды: `/kak-rabotaet-kit`, `/razvernut-sredu`.
+
+## Принципы
+
+1. **Сначала анализ, потом изменение** — сущности, объёмы, зависимости, критерии приёмки до правок.
+2. **Не трогать ядро** — `/bitrix` только read-only; кастом в `/local` или каталогах проекта.
+3. **Минимум кода** — нативная функциональность → D7 → REST → SQL (только с обоснованием в CR).
+4. **Без секретов** — не в коде, CR и ответах агента. Webhook портала (`B24_WEBHOOK_BASE`) — **всегда** из `.env` корня клиентского проекта (не User/System env). Прочие токены — vault / project `.env` по контракту инструмента.
+5. **Воспроизводимость** — нетривиальные изменения через CR (`docs/change-requests/`); handoff между ролями; skill `bitrix24-change-request`.
+
+## Подтверждай факты
+
+Не выдумывай ID сущностей, коды полей, переменные БП, REST-контракты — из файлов проекта, документации или runtime.
+
+## Куда смотреть дальше
+
+| Задача | Rule / skill / subagent |
+|--------|-------------------------|
+| CR, оркестрация | `bitrix24-change-request`, `bitrix24-orchestration`, `orchestrator` |
+| BP PHP | rule `bitrix24-bp-php`, skill `bitrix24-bp-php-activity`, `bp-activity-developer` |
+| CLI/cron | rule `bitrix24-cli`, skill `bitrix24-cli-mass-ops`, `cli-infra-developer` |
+| REST/вебхуки | rule `bitrix24-integrations`, skill `bitrix24-rest-integration`, `integration-analyst` |
+| Документация | rule `bitrix24-docs`, subagent `documentation` |
+| Онбординг / KB | [STARTUP-PROMPT.md](../docs/STARTUP-PROMPT.md), skill `bitrix24-kb-bridge` |
+| Инфра/диагностика | rule `bitrix24-infra-diagnostic`, `cli-infra-developer` |
+| Проверка | rule `bitrix24-testing`, subagent `tester` |
+| Code review | rule `bitrix24-code-review` |
+| Глубокие регламенты B24 | skill `bitrix24-kb-bridge`, rule `bitrix24-knowledge-sources` → KB `docs/INDEX.md` |
+| Expert Kernel (native-first, Cloud/box) | rule `bitrix24-expert-core`; маршрутизация — `bitrix24-expert-routing` |
+| Режим Cursor, объём контекста, эскалация | rule `adaptive-usage`, skill `adaptive-cursor-usage` |
+| Local IDE vs Cursor Cloud Agents | rule/skill `bitrix24-runtime-surface` (≠ профиль `b24-cloud`) |
+
+## Confidence (Bitrix API)
+
+🟢 HIGH — ядро/MCP + кейс · 🟡 MEDIUM — ядро без кейса · 🟠 LOW — только external · 🔴 NONE — не утверждать как факт. Подробнее: KB `docs/methodology/confidence_levels_guide.md`.
+
+## module_id
+
+Кастомные модули: `vendor.module` (латиница, точка). Перед созданием — grep проекта и KB INDEX на существующие модули.
+
+## Knowledge base (обязательна)
+
+Интегратор: `git clone` + `onboard-developer.ps1` (+ nested KB via `sync-kb`). KB: отдельный git `cursor-knowlege-base` → `knowledge-base/`. Bridge: `docs/KB-BRIDGE.md`.

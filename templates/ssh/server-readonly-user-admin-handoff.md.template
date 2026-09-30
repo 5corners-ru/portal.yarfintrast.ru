@@ -1,0 +1,49 @@
+# Заявка админу: read-only SSH для разработки (Bitrix24)
+
+> Шаблон для тикета заказчику. Подставьте значения; **не** вставляйте приватный ключ.
+
+## Контекст
+
+Нужен доступ **только на чтение** к ядру `/bitrix` и кастому `/local` для отладки (Cursor / команда интегратора). Запись на сервер, деплой и SQL — **не** входят в scope.
+
+## Публичный ключ разработчика
+
+Имя файла: `{{KEY_FILE_NAME}}.pub`
+
+```text
+{{PUBLIC_KEY_LINE}}
+```
+
+(одна строка `ssh-ed25519 AAAA… comment`)
+
+## Параметры на сервере (эталон)
+
+| Параметр | Рекомендация |
+|----------|----------------|
+| SSH user | `{{SSH_USER_SUGGESTED}}` (отдельный пользователь, без sudo) |
+| Домашний каталог | `/home/{{SSH_USER_SUGGESTED}}` |
+| Корень сайта | `{{SERVER_PROJECT_PATH}}` |
+| Чтение | `{{SERVER_PROJECT_PATH}}/bitrix`, `{{SERVER_PROJECT_PATH}}/local` |
+| Запись в корень сайта | **запрещена** |
+
+## Проверка после настройки
+
+Разработчик выполнит (со своего ПК):
+
+```bash
+# ожидается: READ_OK_BITRIX, READ_OK_LOCAL, WRITE_DENIED
+test -r {{SERVER_PROJECT_PATH}}/bitrix && echo READ_OK_BITRIX
+test -r {{SERVER_PROJECT_PATH}}/local && echo READ_OK_LOCAL
+test -w {{SERVER_PROJECT_PATH}} && echo WRITE_OK || echo WRITE_DENIED
+```
+
+## Контакты
+
+| | |
+|-|-|
+| Разработчик | {{DEVELOPER_NAME}} |
+| Канал для .pub | {{HANDOFF_CHANNEL}} |
+
+## Нестандарт
+
+Если отдельный user создать нельзя — см. раздел 2c в `docs/SSH-ONBOARDING.md` и карточку `readonly-ssh-core-access.md.template`.

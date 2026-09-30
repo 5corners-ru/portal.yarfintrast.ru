@@ -1,0 +1,19 @@
+---
+description: Быстрые git-команды git: — только scripts/git/git-cmd.ps1, без оркестратора и лишних git-операций.
+alwaysApply: true
+---
+
+# Git quick (`git:`)
+
+Если сообщение пользователя **начинается с** `git:` (регистр не важен):
+
+1. **Не** запускай orchestrator и subagents.
+2. **Не** планируй и **не** вызывай другие git-команды вручную.
+3. Выполни **одну** операцию через skill `git-quick` → `.\scripts\git\git-cmd.ps1` (на **Cursor Cloud** / без PowerShell — native `git`, см. skill).
+4. Ответ — краткий итог по выводу терминала.
+
+Примеры: `git: status`, `git: commit "fix: foo"`, `git: push`, `git: push-mirror` (kit, тимлид), `git: cherry-pick abc1234`, `git: restore abc1234 path/file.php`.
+
+После успешного `push` **в репозитории кита** (не клиентском) дополнительно выполни `push-mirror` / `git: push-mirror`. Ветки `kit-proposal/*` не зеркалятся.
+
+Запрещено без явного запроса: `push --force`, `reset --hard`, `clean -fd`.

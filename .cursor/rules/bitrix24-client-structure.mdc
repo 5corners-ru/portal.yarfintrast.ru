@@ -1,0 +1,60 @@
+---
+description: Универсальная структура клиентского репо — слои 1–3, playbooks, CR, docs-only vs code-in-repo. Use when bootstrapping layout, auditing folders, or migrating promts to playbooks.
+alwaysApply: false
+---
+
+# Структура клиентского репо
+
+Единый каркас команды: **слой 1** (все профили) + **слой 2** (по типу проекта) + **слой 3** (опционально).
+
+Полная спецификация и скрипты раскатки/аудита — в ките `cursor-b24-integrator-kit`: `docs/UNIVERSAL-PROJECT-STRUCTURE.md`.
+
+## Слой 1 — обязательный
+
+```
+AGENTS.md
+.cursor/rules/                # профильные rules (skills/agents — в Team plugin, опционально в репо)
+.cursor/mcp.json               # опционально; часто глобальный ~/.cursor/mcp.json
+docs/playbooks/<role>.md      # расширение subagent для этого клиента
+docs/playbooks/workflow.md    # цепочка CR (не subagent)
+docs/change-requests/         # CR.template.md, README.md, CR-NNN-*.md
+.gitignore                    # секреты (.env, ключи)
+```
+
+| Путь | Назначение |
+|------|------------|
+| `AGENTS.md` | Профиль, оркестрация CR, домен и пути кода |
+| `.cursor/agents/<role>.md` | Subagents (роли Cursor) — **по умолчанию из Team plugin**, в репо только при legacy `-IncludeAgents` |
+| `.cursor/skills/` | Skills — **по умолчанию из Team plugin**, в репо только при legacy `-IncludeSkills` |
+| `docs/playbooks/<role>.md` | Дополнения **только для этого репо** |
+| `docs/change-requests/` | Нетривиальные изменения через CR |
+
+Rule `bitrix24-playbooks.mdc`: subagent ≠ playbook; имена файлов совпадают.
+
+**Не коммитить:** `/bitrix`, реальные `.env`, дампы с ПДн, ключи SSH.
+
+## Слой 2 — по профилю
+
+| Профиль | Rule / skill (из плагина) |
+|---------|---------------------------|
+| B24 коробка | `bitrix24-boxed.mdc`, SSH skills |
+| B24 облако | `bitrix24-cloud.mdc`, webhook в `.env.example` |
+| БУС | `bitrix24-bus.mdc` |
+| Гибрид + n8n | базовый профиль + `n8n-automation.mdc`, `n8n-workflow-change`, `n8n-developer` |
+
+Профиль и пути — в `AGENTS.md` («Специфика клиента»).
+
+## Слой 3 — опционально
+
+| Путь | Когда |
+|------|-------|
+| `local/` | PHP, модули, BP в git |
+| `local/tools/b24-rest/` | REST-диагностика (webhook) |
+| `<domain-package>/` | Крупная предметная область |
+| `docs/architecture/`, `docs/user-guides/` | Долгоживущая документация |
+
+Отсутствие `local/` нормально для **docs-only** репо (код на сервере).
+
+## Legacy: `docs/promts/`
+
+Если в репо `docs/promts/` или `docs/prompts/` — мигрировать в `docs/playbooks/`, `auto-orchestration.md` → `workflow.md`, обновить пути в `AGENTS.md` и CR. Скрипт миграции — в ките: `scripts/migrate-promts-to-playbooks.ps1`.

@@ -1,0 +1,36 @@
+---
+description: Иерархия источников Bitrix24 — D7/REST/UI, KB INDEX-first, external/ policy. Use when verifying API signatures, debugging sources, or choosing documentation.
+alwaysApply: false
+globs: local/**,**/php_interface/**,**/integrations/**,**/rest/**
+---
+
+# Bitrix24: иерархия источников знаний
+
+**Порядок с другими rules:** `mcp-stack` — *как вызвать* MCP; этот rule — *куда смотреть* по типу задачи; `bitrix24-debug-sources` — эскалация при «залипшей» ошибке.
+
+## KB (обязательна для интеграторов)
+
+1. Разрешить путь: skill `bitrix24-kb-bridge` → `$env:CURSOR_KB_PATH` (client workspace) или kit fallback → `docs/INDEX.md`.
+2. **INDEX-first:** из INDEX выбрать 1–3 релевантных `docs/bitrix/*.md`, не glob по всей KB.
+3. Полные регламенты `skills/bitrix-*-rules` — только по триггеру задачи (модуль, ORM, REST, BP).
+4. `docs/external/` — **grep-only**, никогда не bundle и не Read всей папки.
+5. `docs/archive/` — не использовать.
+6. **Expert operational layer (PR2+):** KB `docs/bitrix24-expert/` via INDEX (maps, glossary, cards). Policy — rule `bitrix24-expert-core`; не дублировать в always-on rules.
+
+## Тип вопроса → источник
+
+| Тип | Канон | Резерв |
+|-----|-------|--------|
+| D7 on-premise (ORM, события, БП) | SSH readonly ядро (`bitrix24-readonly-ssh-core`) или локальный `Bitrix24_Core` | KB `docs/bitrix/` via INDEX |
+| REST облако | MCP `b24-dev-mcp` | KB external/b24restdocs (grep) |
+| Vue/Nuxt B24 apps | skill `b24-solution-development` → B24UI `llms.txt` index (official-sources.json); затем точечно | Context7 / KB external/b24ui (grep) |
+| Сторонние библиотеки | Context7 | — |
+
+## L4 (тяжёлые корпуса)
+
+- `Bitrix24_Core` / SSH readonly — сигнатуры D7
+- MCP `b24-dev-mcp` — REST сигнатуры
+- KB `docs/external/` — только точечный grep
+- RLM (`bitrix24-rlm-analysis`) — bulk audit, не замена bridge
+
+Полный регламент: `{KB_ROOT}/skills/bitrix-knowledge-sources/SKILL.md` (read on demand).

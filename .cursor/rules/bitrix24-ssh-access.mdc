@@ -1,0 +1,49 @@
+---
+description: SSH onboarding и read-only доступ к коробке — фазы, запреты, skills
+alwaysApply: false
+---
+
+# Битрикс24: SSH-доступ (onboarding и потребление)
+
+Правило раскатывается только в профилях **b24-boxed** и **hybrid-b24-boxed**. В облаке и чистом БУС SSH к порталу не используется.
+
+Разделяй **настройку доступа** и **работу по SSH**. Host/user/key — только в карточке проекта (`docs/standards/readonly-ssh-core-access.md`), не в общем ките и не в Team Rules.
+
+## Цепочка workflow
+
+```text
+docs/SSH-ONBOARDING.md (человек) → verify-скрипт → bitrix24-readonly-ssh-core (агент)
+```
+
+| Фаза | Где | Агент |
+|------|-----|-------|
+| Onboarding | `docs/SSH-ONBOARDING.md`, skill `bitrix24-ssh-onboarding` (явный вызов) | Только подсказки; `setup-local-ssh-key.ps1`; **без** sudo/useradd на проде |
+| Проверка | `scripts/ssh/verify-readonly-access.ps1` | Может запустить verify; при `WRITE_OK` — предупредить |
+| Работа | `bitrix24-readonly-ssh-core` | Только read по карточке `docs/standards/readonly-ssh-core-access.md` |
+
+Skill `bitrix24-ssh-onboarding` — **только по явному запросу** (не предлагать keygen/sudo спонтанно).
+
+## Запреты (всегда)
+
+- Не просить и не выводить в чат: passphrase, приватный ключ, пароли, содержимое `.pub` с прода в общий кит.
+- Не коммитить ключи; не хардкодить host/user заказчиков в `cursor-b24-integrator-kit`.
+- Не выполнять на проде из Cursor: `sudo`, `useradd`, правка `authorized_keys`, `templates/ssh/server-readonly-user-admin.sh.template` — только для **ручного** запуска админом.
+- Не использовать `ssh-keygen -N ""` по умолчанию; passphrase — только человек в терминале.
+- Не объединять onboarding и `bitrix24-readonly-ssh-core` в один сценарий «всё автоматом».
+
+## Нестандарт (bitrix + sudo + один ключ заказчика)
+
+- Не создавать второго user; ветка handoff → карточка с `access_tier: bitrix_shared`.
+- Verify может дать `WRITE_OK` — зафиксировать в карточке; readonly-core — **по регламенту**, не по ACL.
+
+## Плейсхолдеры карточки
+
+`{{SSH_HOST}}`, `{{SSH_USER}}`, `{{SSH_KEY_PATH}}`, `{{SERVER_PROJECT_PATH}}`, `{{ALLOWED_READ_PATHS}}`, `{{SSH_CONFIG_ALIAS}}`; дополнительно: `access_tier` (`dedicated_readonly` | `bitrix_shared`), `sudo_available` (для людей; агент sudo не использует).
+
+## Перед SSH на сервер
+
+1. Есть `docs/standards/readonly-ssh-core-access.md` (или пользователь дал параметры).
+2. Для нового доступа — пройдены setup → handoff → verify.
+3. Скрипты и порядок: `scripts/ssh/README.md`.
+
+Промпт реализации skills: `docs/prompts/AGENT-PROMPT-bitrix24-ssh-access-skills.md`.

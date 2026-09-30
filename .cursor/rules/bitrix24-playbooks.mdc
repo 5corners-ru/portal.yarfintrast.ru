@@ -1,0 +1,25 @@
+---
+description: Разделение subagents (.cursor/agents) и playbooks (docs/playbooks) — одинаковые имена файлов
+alwaysApply: false
+---
+
+# Subagents и playbooks
+
+| Слой | Путь | Назначение |
+|------|------|------------|
+| **Subagent** | `.cursor/agents/<role>.md` | Роль для Cursor (делегирование / Task). Кто выполняет шаг. |
+| **Playbook** | `docs/playbooks/<role>.md` | Расширение проекта для **той же** роли. Как именно на этом клиенте. |
+
+Имена совпадают: `developer`, `bp-activity-developer`, `cli-infra-developer`, `integration-analyst`, `architect`, `orchestrator`, `change-request-preparer`, `task-brief-preparer`, `html-layout`, `tester`, `documentation`, `n8n-developer`, `gas-script-developer`, `plugin-contributor`.
+
+Общий регламент цепочки CR (не subagent): `docs/playbooks/workflow.md`.
+
+Не называй playbooks «агентами» в чате с пользователем — говорите **subagent** (роль Cursor) или **playbook** (доп. инструкция проекта).
+
+Subagent читает свой playbook, если файл существует. Базовое поведение — в `.cursor/agents/<role>.md`.
+
+## Универсальность subagents
+
+Subagents из кита **одинаковы на всех проектах** — не требуют правок под клиента. `AGENTS.md` и playbooks **дополняют**, но не заменяют базовое поведение subagent, если явно не указано иное.
+
+Проектный регламент в `AGENTS.md` может: уточнить пути, профиль (boxed/cloud/BUS), порядок ролей, запреты. Без такого регламента — работай по subagent + CR.

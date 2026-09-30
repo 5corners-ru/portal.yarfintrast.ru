@@ -1,0 +1,13 @@
+# Indexing exclude — коробочный Bitrix24 (и hybrid-b24-boxed)
+# Explicit @path still readable; indexing ≠ unread
+
+vendor/
+bitrix/modules/
+node_modules/
+dist/
+build/
+cache/
+tmp/
+**/logs/
+artifacts/raw/
+large-generated-docs/

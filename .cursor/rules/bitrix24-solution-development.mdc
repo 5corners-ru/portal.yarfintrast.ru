@@ -1,0 +1,21 @@
+---
+description: B24 solution architecture gate — Cloud/On-Prem/cross-platform, auth, B24UI/JSSDK pointers. Use for apps, placements, webhooks, integrations, /local technical design.
+globs: "**/app/**,**/apps/**,**/rest/**,**/*webhook*,**/*oauth*,**/*placement*,**/local/**,**/integrations/**"
+alwaysApply: false
+---
+
+# Bitrix24 Solution Development
+
+Перед нетривиальной **технической** реализацией B24 (приложение, placement, webhook, UI в портале, `/local`, workers) — skill **`b24-solution-development`** (Solution Gate).
+
+Не дублирует `bitrix24-expert-core` (native-first продукт) и не заменяет `bitrix24-rest-integration` / box skills.
+
+## Мини-guardrails
+
+1. Сначала portal: **cloud** / **on-premise** / **both** — иначе не выбирай `/local` для облака.
+2. Cloud: без `/local`, PHP server API, локальных модулей и server event handlers.
+3. Cross-platform: portable REST/JSSDK/B24UI; не тащи on-prem-only зависимости без адаптера.
+4. Auth: embedded → **B24Frame**; incoming webhook backend → **B24Hook** (секреты **не** в браузер); OAuth app → **B24OAuth**; server PHP → local context.
+5. UI/frame: B24UI / official frame-ui до кастомных слайдеров/`window.parent`; REST — MCP `b24-dev-mcp` при сомнении в методе.
+
+Обзор: `docs/cursor/B24-SOLUTION-DEVELOPMENT.md`. Findings → `bitrix24-kit-contribution`.

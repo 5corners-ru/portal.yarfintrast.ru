@@ -1,0 +1,27 @@
+#!/bin/bash
+# =============================================================================
+# ТОЛЬКО ДЛЯ РУЧНОГО ЗАПУСКА АДМИНОМ НА СЕРВЕРЕ.
+# НЕ выполнять из Cursor агентом. Не коммитить с реальными host/key в общий кит.
+# =============================================================================
+set -euo pipefail
+
+READONLY_USER="{{SSH_USER_SUGGESTED}}"
+SITE_ROOT="{{SERVER_PROJECT_PATH}}"
+PUB_KEY_LINE='{{PUBLIC_KEY_LINE}}'
+
+if [[ "$READONLY_USER" == *"{{"* ]] || [[ "$SITE_ROOT" == *"{{"* ]]; then
+  echo "Заполните плейсхолдеры в скрипте перед запуском."
+  exit 1
+fi
+
+# Пример: создать пользователя и повесить ключ (адаптировать под политику заказчика)
+# useradd -m -s /bin/bash "$READONLY_USER"
+# install -d -m 700 "/home/$READONLY_USER/.ssh"
+# echo "$PUB_KEY_LINE" >> "/home/$READONLY_USER/.ssh/authorized_keys"
+# chmod 600 "/home/$READONLY_USER/.ssh/authorized_keys"
+# chown -R "$READONLY_USER:$READONLY_USER" "/home/$READONLY_USER/.ssh"
+
+# Права только на чтение (пример — уточнить у заказчика)
+# setfacl / chmod / группа — по регламенту хостинга
+
+echo "После настройки разработчик проверит: READ_OK_BITRIX, READ_OK_LOCAL, WRITE_DENIED"

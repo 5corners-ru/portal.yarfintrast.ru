@@ -1,0 +1,13 @@
+---
+description: При отладке Битрикс24 — официальные источники, если локальные правки не помогают
+alwaysApply: false
+---
+
+# Битрикс24: источники при «залипших» ошибках
+
+Если ошибка (модули, CRM, `documentgenerator`, БП, REST) **не снимается** несколькими итерациями по коду и логам:
+
+1. **Командная KB** (skill `bitrix24-kb-bridge`): `docs/INDEX.md` → релевантный `docs/bitrix/*.md` (не glob по `external/`).
+2. **Официальная документация**: [dev.1c-bitrix.ru](https://dev.1c-bitrix.ru/), [training.bitrix24.com](https://training.bitrix24.com/), [apidocs.bitrix24.com](https://apidocs.bitrix24.com/).
+3. **Форумы**: [dev.1c-bitrix.ru/community/forums/](https://dev.1c-bitrix.ru/community/forums/).
+4. Только после этого — изменения в коде на основе подтверждённых формулировок или runtime-логов, не угадывание.

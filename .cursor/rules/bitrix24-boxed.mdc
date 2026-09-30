@@ -1,0 +1,52 @@
+---
+description: Коробочный Bitrix24 — local, модули, БП, cron
+globs: local/**,**/php_interface/**,**/bitrix/php_interface/**
+alwaysApply: false
+---
+
+# Битрикс24: коробка
+
+## Контекст
+
+Серверный PHP внутри портала предпочтительнее REST, если задача решается на сервере.
+
+## Где писать код
+
+- Модули: `/local/modules`
+- БП PHP-активность: без `<?php`, `try/catch`, `WriteToTrackingService`, без `echo`/`die`/`var_dump`
+- CLI/cron: корректный bootstrap `prolog_before.php`, `NO_KEEP_STATISTIC`, resume/lock для массовых операций
+
+## Install / uninstall модулей
+
+`partner_modules` грузит только `install/index.php` **без** `include.php`. В `InstallDB` / install-хуках не полагайся на autoload из `include.php`: после `registerModule` — `Loader::includeModule` / `registerAutoLoadClasses` / `require_once` классов. `UnInstallDB` предпочтительно дропать таблицы по **именам строк**, без ORM-классов (иначе half-install не удаляется).
+
+Если чинишь этот паттерн в одном модуле задачи — сразу проверь **все** sibling-модули/install в том же CR (same-pattern fan-out).
+
+## Five Corners product modules (`fivecorners.*`)
+
+Перед scaffold/доработкой — KB skill `bitrix-module-rules` (через `bitrix24-kb-bridge`). Обязательно:
+
+| Требование | Куда |
+|------------|------|
+| Раздел админки **«5 УГЛОВ»** | `OnBuildGlobalMenu` → `parent_menu` = `global_menu_fivecorners` (создать секцию, если нет) |
+| Настройки модуля | `options.php` в корне модуля и/или `/local/admin/…`; пункт меню ведёт на `settings.php?mid=<module_id>` или admin-страницу |
+| Регистрация меню | в `install/` (`RegisterModuleDependences` / EventManager), **не** в `include.php` |
+| Эталон | `fivecorners.admintemplate`; рабочий образец — `fivecorners.companyimport` |
+
+CLI/ops runbook **не заменяют** пункт в «5 УГЛОВ». Пропуск AdminMenu/`options.php` без явного waiver в CR = дефект handoff.
+
+## Массовые операции
+
+Пакеты ~50, пауза 1–2 с, лимит runtime ~240 с, lock, cursor/resume, dry-run, skip без изменений, итоговый отчёт — не тысячи обновлений подряд и не рекурсивный запуск БП без контроля.
+
+## Сущности
+
+Smart Process, IBlock/Lists, Disk/CFile, CRM Factory/Item — не путать с облачными ограничениями. FM-поля PHONE/EMAIL: instance API, `TYPE_ID`, нормализация, без слепой перезаписи.
+
+## opcache (CLI ≠ FPM)
+
+PHP CLI и php-fpm — разные worker-процессы. После деплоя `/local` проверяй поведение через веб или перезапуск php-fpm; «в CLI работает, на портале старое» — типичный opcache.
+
+## Отладка
+
+При «залипшей» ошибке — rule `bitrix24-debug-sources.mdc`.

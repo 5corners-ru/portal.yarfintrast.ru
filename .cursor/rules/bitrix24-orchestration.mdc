@@ -1,0 +1,112 @@
+---
+description: Adaptive orchestration — SIMPLE/STANDARD/COMPLEX routing. Активируется при пути к CR или задаче на реализацию.
+alwaysApply: false
+---
+
+# Adaptive orchestration (команда)
+
+## Классификация задачи (routing)
+
+Перед началом работы определи уровень задачи. Классификация — inline, в рамках reasoning, без отдельного LLM-вызова.
+
+| Level        | Примеры                                                                                            | Workflow                                                                                      |
+| ------------ | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| **SIMPLE**   | опечатка, rename, изменение одного условия, объяснение кода, правка SQL-фильтра, локальная правка одного файла | Targeted file → implementation → self-validation. Без CR, без subagents                       |
+| **STANDARD** | изменение PHP activity, правка нескольких связанных файлов, небольшая доработка интеграции, multi-component bugfix | Targeted context → relevant skill → implementation → self-validation. Допустим 1 subagent     |
+| **COMPLEX**  | новая подсистема, модуль, интеграция, миграция, high-risk production change, неизвестный legacy, multi-subsystem change | CR → orchestrator execute → architect → developer → tester → documentation (полный pipeline)  |
+
+**Правила classification:**
+
+- Если задача неоднозначна — используй более строгий уровень (SIMPLE→STANDARD→COMPLEX) (BC-07).
+- При обнаружении unknown dependencies, architectural consequences, high risk — повышай уровень.
+- Пользователь всегда может явно запросить полный workflow: «проведи architecture review», «запусти полный pipeline» (BC-06).
+- `git:` prefix и `developer:` prefix — существующие shortcutы, routing на них не распространяется.
+- Явный путь к CR (`docs/change-requests/…md`) в сообщении = COMPLEX (всегда).
+
+**Targeted context first:**
+
+- Если пользователь указал конкретный файл, функцию, CR или ошибку — сначала работай с указанным контекстом.
+- Расширяй поиск только при обнаружении external dependency или недостатке данных.
+- Запрещён подход «простая задача → сначала полный анализ проекта».
+- Не подключай `@Folder` Full Folder Content без причины: путь → обзор → файлы.
+- Оценка стоимости: SIMPLE ↔ S/N, STANDARD ↔ N, COMPLEX ↔ C/R (skill `adaptive-cursor-usage`). Это рекомендация режима и объёма контекста, таблица routing выше не меняется.
+
+## SIMPLE — прямое исполнение
+
+Применяй, когда задача затрагивает один файл, не имеет побочных эффектов на другие подсистемы и результат очевиден.
+
+**Примеры:** исправление опечатки, rename переменной, изменение одного условия в if/switch, объяснение кода, правка SQL-фильтра, локальная правка одного файла в `/local`.
+
+**Workflow:**
+
+1. Открой targeted файл.
+2. Выполни изменение.
+3. Self-validation (см. ниже).
+
+**Ограничения:**
+
+- CR не требуется.
+- Subagents не запускай (ни architect, ни tester, ни documentation).
+- Если в процессе обнаружишь зависимости или риск — повышай до STANDARD или COMPLEX.
+
+**Self-validation:**
+
+- Syntax check / lint (если доступно).
+- Просмотри diff — убедись, что изменение соответствует задаче.
+- `ReadLints` на изменённые файлы.
+- Убедись, что не затронуты файлы вне scope задачи.
+
+## STANDARD — targeted skill + self-validation
+
+Применяй, когда задача затрагивает несколько связанных файлов или требует domain-specific skill, но не требует архитектурного анализа или independent testing.
+
+**Примеры:** изменение PHP activity (skill `bitrix24-bp-php-activity`), правка нескольких связанных файлов, небольшая доработка REST-интеграции, bugfix нескольких компонентов.
+
+**Workflow:**
+
+1. Определи targeted context — файлы и компоненты, которые затрагивает задача.
+2. Если есть подходящий skill — используй его (напр. `bitrix24-bp-php-activity`, `bitrix24-rest-integration`).
+3. Выполни implementation.
+4. Self-validation (см. ниже).
+
+**Ограничения:**
+
+- CR: допустим краткий inline change record в ответе (не обязательно отдельный файл).
+- Допустим **1 subagent** для isolated подзадачи. Subagent получает конкретную цель, а не «изучи весь проект».
+- Subagent→subagent рекурсия **запрещена**.
+- Если в процессе обнаружишь cross-subsystem impact, unknown legacy или high risk — повышай до COMPLEX.
+
+**Self-validation:**
+
+- Всё из SIMPLE (lint, diff review, ReadLints, scope check).
+- Запусти relevant test, если он существует в проекте.
+
+## COMPLEX — полный pipeline
+
+Применяй для задач с высоким риском, неизвестными зависимостями, multi-subsystem scope или при явном пути к CR.
+
+### Когда включать цепочку автоматически
+
+Если в сообщении пользователя есть **путь к CR** (`docs/change-requests/…md`) или явная задача на **реализацию** по уже существующему CR:
+
+1. Не пиши код реализации в корневом чате — делегируй.
+2. Запусти subagent **`orchestrator`** в режиме **execute** (см. `.cursor/agents/orchestrator.md`): план → последовательное делегирование `architect` → исполнители → `tester` → `documentation` → **kit findings gate** (Task `plugin-contributor` на каждый high|medium candidate **до** Final Summary; блок `## Kit findings` в саммари обязателен).
+3. Передавай каждому subagent путь к CR и краткий handoff от предыдущего шага. Каждый subagent завершает handoff секцией **Kit finding** (rule `bitrix24-kit-contribution.mdc`). Finding в тексте ≠ export в кит; без gate/contributor proposal не создаётся.
+
+Если CR ещё нет, а задача нетривиальная — сначала `change-request-preparer` или skill `bitrix24-change-request`, затем orchestrator execute.
+
+**CR:** полноценный CR обязателен.
+
+**Subagents:** полная multi-agent цепочка сохраняется. Каждый subagent получает isolated задачу и handoff от предыдущего. Соблюдай профиль выполнения (default **balanced**): technical Task с `model: composer-2.5`, без nested custom subagents вне `deep`, compact output contract. Параллель — только независимые ветки в лимите профиля (rule `bitrix24-execution-profiles`). **Исключение nesting:** только orchestrator в execute-режиме цепляет именованные роли кита; implementer→subagent запрещён. Для docs/QA — `documentation` / `tester`, не `generalPurpose`.
+
+## Когда НЕ запускать цепочку
+
+- Пользователь написал: «только план», «не делегируй», «plan-only», «без subagents».
+- Вопрос без правок («как работает», «где файл»).
+- Пользователь явно указал **одну** роль (`developer:`, `n8n-developer:`) — выполни только её.
+
+## Один чат vs несколько
+
+Для COMPLEX pipeline предпочитай **последовательное** делегирование в текущем чате. Длинные фазы (discovery → implementation) — handoff-файл и при необходимости новый чат (`docs/cursor/LONG-SESSIONS.md`), а не бесконечный один тред без артефактов.
+
+Подробно: `AGENTS.md`, кит `docs/INTEGRATOR-WORKFLOW.md`, `docs/cursor/COST-CONTROL.md`.

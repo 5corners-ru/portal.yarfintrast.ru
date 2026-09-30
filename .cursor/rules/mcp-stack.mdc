@@ -1,0 +1,14 @@
+---
+description: Правила использования MCP-стека команды (Bitrix24 docs, Context7, Chrome; n8n — в проекте)
+alwaysApply: false
+---
+
+При задачах по **Bitrix24 REST API** используй официальный MCP `b24-dev-mcp` (документация). Не выдумывай имена методов и параметры — сначала запроси их через MCP.
+
+Для **сторонних библиотек и фреймворков** используй Context7 (`use context7` или укажи library id, например `/vercel/next.js`).
+
+Для **отладки и проверки веб-интерфейса** — `chrome-devtools` (Chrome CDP / DevTools).
+
+**MCP-серверы не входят в плагин кита** — Team MCP в Dashboard (тимлид) или `~/.cursor/mcp.json` через `install-global.ps1` / `onboard-developer.ps1`. **n8n** (`automation.5corners.ru-n8n`) — только **проектный** `.cursor/mcp.json` (см. `docs/SECRETS-SETUP.md`, rule `n8n-automation.mdc`).
+
+Секреты только из env: `CONTEXT7_API_KEY` (обязательно), `N8N_MCP_TOKEN` (по запросу тимлида для n8n в hybrid). Не хардкодить в код и конфиги.
